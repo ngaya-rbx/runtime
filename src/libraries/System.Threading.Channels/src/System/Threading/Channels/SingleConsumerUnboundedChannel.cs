@@ -251,15 +251,7 @@ namespace System.Threading.Channels
                     ChannelUtilities.Complete(parent._completion, error);
                 }
 
-                // Complete a blocked reader if necessary
-                if (blockedReader is not null)
-                {
-                    error = ChannelUtilities.CreateInvalidCompletionException(error);
-                    blockedReader.TrySetException(error);
-                }
-
-                // Complete a waiting reader if necessary.  (We really shouldn't have both a blockedReader
-                // and a waitingReader, but it's more expensive to prevent it than to just tolerate it.)
+                // Complete a waiting reader if necessary.
                 if (waitingReader is not null)
                 {
                     if (error is not null)
@@ -270,6 +262,14 @@ namespace System.Threading.Channels
                     {
                         waitingReader.TrySetResult(result: false);
                     }
+                }
+
+                // Complete a blocked reader if necessary. (We really shouldn't have both a blockedReader
+                // and a waitingReader, but it's more expensive to prevent it than to just tolerate it.)
+                if (blockedReader is not null)
+                {
+                    error = ChannelUtilities.CreateInvalidCompletionException(error);
+                    blockedReader.TrySetException(error);
                 }
 
                 // Successfully completed the channel
